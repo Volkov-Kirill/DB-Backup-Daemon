@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,17 +6,20 @@ using System.Threading.Tasks;
 using System.IO;
 using Serilog;
 using Microsoft.Data.Sqlite;
+using DotNetEnv;
 
 namespace project.Database
 {
     public class Database
     {
 
-        public void installDatabase(string databaseName)
+        public void installDatabase()
         {
-            {
-             
-                using (var connection = new SqliteConnection(databaseName))
+            Env.Load();
+
+            string? databaseName = Environment.GetEnvironmentVariable("BACKUP_DB_PATH");
+
+            using (var connection = new SqliteConnection(databaseName))
                 {
                     connection.Open();
 
@@ -50,7 +53,7 @@ namespace project.Database
                     }
                     Log.Information("База данных создана");
                 }
-            }
+            
         }
     }
 }
