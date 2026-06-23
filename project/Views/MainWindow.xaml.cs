@@ -12,16 +12,25 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Path = System.IO.Path;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using Serilog;
 namespace project
 {
 
     public partial class MainWindow : Window
     {
+        Database.Database db = new Database.Database();
         public MainWindow()
         {
             InitializeComponent();
-            Log.Warning("Приложение запущено.");
+            Log.Warning("Приложение запущено."); db.InitDatabase();
+            db.RegisterUser("admin", "admin");
+        }
+
+        private void Login_bth(object sender, RoutedEventArgs e)
+        {
+            db.LoginUser(LoginName.Text, Password.Text);
         }
     }
 }
