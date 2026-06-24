@@ -24,42 +24,19 @@ namespace project.Views
     /// </summary>
     public partial class Dumper : Window
     {
+        Database.Database db = new Database.Database();
         public Dumper()
         {
             InitializeComponent();
+            var backups = db.GetBackups()
+     .Select(b => new
+     {
+         Id = b.Id,
+         DisplayInfo = $"{b.BackupName} | {b.CreatedAt:G} | {b.Location}"
+     }).ToList();
+
+            BackupListBox.ItemsSource = backups;
+            BackupListBox.DisplayMemberPath = "DisplayInfo";
         }
-        DumperManager dumperManager = new DumperManager();
-        private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
-        {
-            var folderDlg = new FolderBrowserDialog();
-            if (folderDlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                string folderPath = folderDlg.SelectedPath;
-                txtFolderPath.Text = folderPath;
-            }
-        }
-
-        private void btnArchive_Click(object sender, RoutedEventArgs e)
-        {
-            string folderPath = txtFolderPath.Text;
-            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-            {
-                return;
-            }
-
-            SaveFileDialog saveDlg = new SaveFileDialog
-            {
-                Filter = "ZIP файлы (*.zip)|*.zip",
-                FileName = "sql_files_backup.zip"
-            };
-
-            if (saveDlg.ShowDialog() == true)
-            {
-                string zipPath = saveDlg.FileName;
-                dumperManager.IntallDumper(zipPath, folderPath);
-            }
-        }
-
-
     }
 }

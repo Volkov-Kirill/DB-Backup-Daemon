@@ -1,3 +1,5 @@
+using project.Views;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +16,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Path = System.IO.Path;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
-using Serilog;
 namespace project
 {
 
@@ -24,13 +25,19 @@ namespace project
         public MainWindow()
         {
             InitializeComponent();
-            Log.Warning("Приложение запущено."); db.InitDatabase();
+            Log.Warning("Приложение запущено.");
+            db.InitDatabase();
             db.RegisterUser("admin", "admin");
         }
 
         private void Login_bth(object sender, RoutedEventArgs e)
         {
-            db.LoginUser(LoginName.Text, Password.Text);
+            if (db.LoginUser(LoginName.Text, Password.Text) == true)
+            {
+                Dumper dumper = new Dumper();
+                dumper.Show();
+                this.Hide();
+            }
         }
     }
 }
