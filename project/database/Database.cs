@@ -12,7 +12,7 @@ namespace project.Database
         private const string _connectionString = "Data Source=test.db";
         private long _currentUserId;
 
-        public Database()
+        public void installDatabase()
         {
             Batteries.Init();
 
