@@ -7,8 +7,27 @@
         mc:Ignorable="d"
         Title="Dumper" Height="421" Width="633">
     <Grid Margin="10">
-        <StackPanel Margin="10">
-            <ListBox x:Name="BackupListBox" DisplayMemberPath="DisplayInfo" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="DB-Backup-Daemon" FontSize="22" FontWeight="Bold" />
+            <TextBlock x:Name="StatusText" Text="Готов к работе" FontWeight="Bold" Margin="0,8,0,8" />
         </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Создать бэкап сейчас" Width="125" Height="32" Margin="0,0,8,0" Click="CreateBackup_Click" />
+            <Button Content="Старт фона" Width="70" Height="32" Margin="0,0,8,0" Click="StartTimer_Click" />
+            <Button Content="Стоп фона" Width="70" Height="32" Margin="0,0,8,0" Click="StopTimer_Click" />
+            <Button Content="Обновить историю" Width="100" Height="32" Margin="0,0,8,0" Click="Refresh_Click" />
+            <Button Content="Открыть папку" Width="100" Height="32" Click="OpenFolder_Click" />
+        </StackPanel>
+
+        <GroupBox Grid.Row="2" Header="История бэкапов">
+            <ListBox x:Name="BackupListBox" DisplayMemberPath="DisplayInfo" />
+        </GroupBox>
     </Grid>
 </Window>

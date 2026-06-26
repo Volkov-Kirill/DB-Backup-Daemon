@@ -1,3 +1,4 @@
+using project.LogSystem;
 using project.Views;
 using Serilog;
 using System;
@@ -21,13 +22,13 @@ namespace project
 
     public partial class MainWindow : Window
     {
-        Database.Database db = new Database.Database();
+        private readonly Database.Database db = new Database.Database();
         public MainWindow()
         {
             InitializeComponent();
-            Log.Warning("Приложение запущено.");
+            LogSystemInit.Init();
+            Log.Information("Приложение запущено.");
             db.InitDatabase();
-            db.RegisterUser("admin", "admin");
         }
 
         private void Login_bth(object sender, RoutedEventArgs e)
@@ -37,6 +38,10 @@ namespace project
                 Dumper dumper = new Dumper();
                 dumper.Show();
                 this.Hide();
+            }
+            else
+            {
+                MessageBox.Show("Неверный логин или пароль. По умолчанию: admin / admin", "Ошибка входа");
             }
         }
     }

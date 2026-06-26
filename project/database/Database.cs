@@ -13,7 +13,7 @@ namespace project.Database
     public class Database
     {
 
-        public void installDatabase()
+        public void installDatabase()цпукц
         {
             Env.Load();
 
