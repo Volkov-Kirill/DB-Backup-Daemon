@@ -1,31 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using Serilog;
 using project.DumpSystem.DumpManager;
 
 namespace project.DumpSystem.ArchiverManager
 {
-
     public class ArchiverManager
     {
-        Addition addition = new Addition();
-        DumperManager Dumper = new DumperManager();
+        private readonly DumperManager _dumper = new DumperManager();
 
-        public void Init(string url)
+        public BackupResult Init(string url)
         {
-            if (addition.CheckUrl(url))
-            {
-                Log.Information("Начинаем дамп");
-                Dumper.IntallDumper();
-            }
+            Log.Information("Запуск бэкапа");
+            return _dumper.CreateBackup();
         }
-
-
-
-
     }
 }
