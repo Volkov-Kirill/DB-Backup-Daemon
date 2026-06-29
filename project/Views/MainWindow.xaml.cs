@@ -1,5 +1,5 @@
-using project.Views;
 using project.LogSystem;
+using project.Views;
 using Serilog;
 using System.Windows;
 namespace project

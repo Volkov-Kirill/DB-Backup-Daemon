@@ -1,23 +1,11 @@
-using Microsoft.Win32;
 using project.DumpSystem.DumpManager;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using Path = System.IO.Path;
-using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace project.Views
 {
@@ -95,27 +83,26 @@ namespace project.Views
             BackupListBox.ItemsSource = backups;
         }
 
-        //private void OpenFolder_Click(object sender, RoutedEventArgs e)
-        //{
-        //    try
-        //    {
-        //        string backupDirectory = DumperManager.GetBackupDirectory();
+        private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string backupDirectory = dumper.GetBackupDirectory();
 
-        //        if (!Directory.Exists(backupDirectory))
-        //        {
-        //            Directory.CreateDirectory(backupDirectory);
-        //        }
+                if (!Directory.Exists(backupDirectory))
+                    Directory.CreateDirectory(backupDirectory);
 
-        //        Process.Start("explorer.exe", backupDirectory);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show(
-        //            "Не удалось открыть папку бэкапов:\n" + ex.Message,
-        //            "Ошибка",
-        //            MessageBoxButton.OK,
-        //            MessageBoxImage.Error);
-        //    }
-        //}
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = backupDirectory,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось открыть папку бэкапов:\n" + ex.Message,
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }

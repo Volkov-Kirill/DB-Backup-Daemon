@@ -261,7 +261,6 @@
     </Compile>
     <!-- Слой Data -->
     <Compile Include="database\Database.cs" />
-    <Compile Include="Data\DbContext.cs" />
     <!-- Слой ViewModels -->
     <Compile Include="Models\DumpSystem\BackupResult.cs" />
     <Compile Include="Models\DumpSystem\ProjectConfig.cs" />
