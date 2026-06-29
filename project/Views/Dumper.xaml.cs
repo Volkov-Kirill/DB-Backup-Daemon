@@ -95,27 +95,27 @@ namespace project.Views
             BackupListBox.ItemsSource = backups;
         }
 
-        private void OpenFolder_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string backupDirectory = DumperManager.GetBackupDirectory();
+        //private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        string backupDirectory = DumperManager.GetBackupDirectory();
 
-                if (!Directory.Exists(backupDirectory))
-                {
-                    Directory.CreateDirectory(backupDirectory);
-                }
+        //        if (!Directory.Exists(backupDirectory))
+        //        {
+        //            Directory.CreateDirectory(backupDirectory);
+        //        }
 
-                Process.Start("explorer.exe", backupDirectory);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Не удалось открыть папку бэкапов:\n" + ex.Message,
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-        }
+        //        Process.Start("explorer.exe", backupDirectory);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show(
+        //            "Не удалось открыть папку бэкапов:\n" + ex.Message,
+        //            "Ошибка",
+        //            MessageBoxButton.OK,
+        //            MessageBoxImage.Error);
+        //    }
+        //}
     }
 }

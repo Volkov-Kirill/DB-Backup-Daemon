@@ -87,7 +87,7 @@ namespace project.DumpSystem.DumpManager
             }
         }
 
-
+        // Старый метод оставлен, чтобы не ломать структуру проекта.
         public void IntallDumper(string zipPath, string folderPath)
         {
             try
@@ -136,7 +136,7 @@ namespace project.DumpSystem.DumpManager
 
             var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-
+            // 7 ежедневных бэкапов: оставляем самый свежий архив за каждый день.
             foreach (var file in files
                 .GroupBy(f => GetBackupTime(f).Date)
                 .OrderByDescending(g => g.Key)
@@ -146,7 +146,7 @@ namespace project.DumpSystem.DumpManager
                 keep.Add(file.FullName);
             }
 
-
+            // 4 еженедельных бэкапа: оставляем самый свежий архив за каждую календарную неделю.
             foreach (var file in files
                 .GroupBy(f => GetWeekKey(GetBackupTime(f)))
                 .OrderByDescending(g => g.Max(GetBackupTime))
@@ -156,7 +156,7 @@ namespace project.DumpSystem.DumpManager
                 keep.Add(file.FullName);
             }
 
-    
+            // 1 ежемесячный бэкап: оставляем самый свежий архив за последний месяц, где есть архивы.
             foreach (var file in files
                 .GroupBy(f => GetBackupTime(f).ToString("yyyy-MM", CultureInfo.InvariantCulture))
                 .OrderByDescending(g => g.Max(GetBackupTime))

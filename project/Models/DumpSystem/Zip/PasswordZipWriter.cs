@@ -93,8 +93,8 @@ namespace project.DumpSystem.Zip
         {
             writer.Write(0x04034b50u);
             writer.Write((ushort)20);
-            writer.Write((ushort)0x0801); 
-            writer.Write((ushort)0);
+            writer.Write((ushort)0x0801); // encrypted + UTF-8 names
+            writer.Write((ushort)0); // store, no compression
             writer.Write(dosTime);
             writer.Write(dosDate);
             writer.Write(crc);

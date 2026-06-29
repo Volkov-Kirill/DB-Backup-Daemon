@@ -1,195 +1,219 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Serilog;
-using Microsoft.Data.Sqlite;
-using SQLitePCL;
-using System.Windows;
+using project.DumpSystem;
 
 namespace project.Database
 {
+    public class BackupRecord
+    {
+        public long Id { get; set; }
+        public string BackupName { get; set; }
+        public string Location { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
     public class Database
     {
-        private const string _connectionString = "Data Source=test.db";
-        private long _currentUserId;
+        private static long _currentUserId;
+        private readonly string _dataPath;
 
-        public void installDatabase()
+        public Database()
         {
-            Batteries.Init();
-
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                throw new Exception("Переменная окружения BACKUP_DB_PATH не установлена");
-            }
+            _dataPath = ProjectConfig.ResolvePath(ProjectConfig.Get("APP_DATA_PATH", "appdata.db"));
         }
-
 
         public void InitDatabase()
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            try
             {
-                connection.Open();
-
-                string createUsersTable = @"
-                CREATE TABLE IF NOT EXISTS Users (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL UNIQUE,
-                    Password TEXT NOT NULL
-                );";
-
-                string createBackupsTable = @"
-                CREATE TABLE IF NOT EXISTS Backups (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    UserId INTEGER NOT NULL,
-                    BackupName TEXT,
-                    Location TEXT,
-                    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
-                );";
-
-                using (var command = new SqliteCommand(createUsersTable, connection))
+                string directory = Path.GetDirectoryName(_dataPath);
+                if (!string.IsNullOrEmpty(directory))
                 {
-                    command.ExecuteNonQuery();
+                    Directory.CreateDirectory(directory);
                 }
 
-                using (var command = new SqliteCommand(createBackupsTable, connection))
+                if (!File.Exists(_dataPath))
                 {
-                    command.ExecuteNonQuery();
+                    File.WriteAllText(_dataPath, string.Empty, Encoding.UTF8);
                 }
 
-                Log.Information("База данных инициализирована");
+                RegisterUser("admin", "admin");
+                Log.Information("Локальная база приложения инициализирована: {Path}", _dataPath);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Ошибка инициализации локальной базы: {Message}", ex.Message);
             }
         }
 
-        // Регистрация нового пользователя
         public bool RegisterUser(string username, string password)
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            var lines = ReadLines();
+            bool exists = lines.Any(l => l.StartsWith("USER|", StringComparison.OrdinalIgnoreCase) && Decode(GetPart(l, 2)) == username);
+            if (exists)
             {
-                connection.Open();
-
-                string insertUser = "INSERT INTO Users (Name, Password) VALUES (@name, @password);";
-
-                try
-                {
-                    using (var cmd = new SqliteCommand(insertUser, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@name", username);
-                        cmd.Parameters.AddWithValue("@password", password);
-                        cmd.ExecuteNonQuery();
-                    }
-                    return true; // успешно
-                }
-                catch (SqliteException ex)
-                {
-                    Log.Error($"Ошибка регистрации: {ex.Message}");
-                    return false; // ошибка (например, дублирование имени)
-                }
+                return true;
             }
+
+            long nextId = GetNextId(lines, "USER");
+            lines.Add("USER|" + nextId + "|" + Encode(username) + "|" + Encode(password));
+            WriteLines(lines);
+            return true;
         }
 
-        // Авторизация пользователя
         public bool LoginUser(string username, string password)
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            foreach (string line in ReadLines())
             {
-                connection.Open();
-
-                string query = "SELECT Id FROM Users WHERE Name = @name AND Password = @password;";
-                using (var cmd = new SqliteCommand(query, connection))
+                if (!line.StartsWith("USER|", StringComparison.OrdinalIgnoreCase))
                 {
-                    cmd.Parameters.AddWithValue("@name", username);
-                    cmd.Parameters.AddWithValue("@password", password);
+                    continue;
+                }
 
-                    var result = cmd.ExecuteScalar();
-                    if (result != null)
+                string name = Decode(GetPart(line, 2));
+                string pass = Decode(GetPart(line, 3));
+
+                if (name == username && pass == password)
+                {
+                    long id;
+                    if (!long.TryParse(GetPart(line, 1), out id))
                     {
-                        _currentUserId = (long)result;
-                        MessageBox.Show("oket");
-                        return true; // вошел
+                        id = 1;
                     }
+
+                    _currentUserId = id;
+                    return true;
                 }
             }
-            return false; // не найден или неверный пароль
+
+            return false;
         }
 
-        // Получить текущего пользователя
         public long GetCurrentUserId()
         {
+            if (_currentUserId == 0)
+            {
+                _currentUserId = 1;
+            }
+
             return _currentUserId;
         }
 
-        // Добавить бэкап
         public bool AddBackup(string backupName, string location)
         {
-            if (_currentUserId == 0)
-                return false;
-
-            using (var connection = new SqliteConnection(_connectionString))
+            try
             {
-                connection.Open();
+                var lines = ReadLines();
+                long nextId = GetNextId(lines, "BACKUP");
+                long userId = GetCurrentUserId();
+                long ticks = DateTime.Now.Ticks;
 
-                string insertBackup = @"
-                INSERT INTO Backups (UserId, BackupName, Location)
-                VALUES (@userId, @backupName, @location);";
-
-                try
-                {
-                    using (var cmd = new SqliteCommand(insertBackup, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@userId", GetCurrentUserId());
-                        cmd.Parameters.AddWithValue("@backupName", backupName);
-                        cmd.Parameters.AddWithValue("@location", location);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Ошибка добавления бэкапа: {ex.Message}");
-                    return false;
-                }
+                lines.Add("BACKUP|" + nextId + "|" + userId + "|" + Encode(backupName) + "|" + Encode(location) + "|" + ticks);
+                WriteLines(lines);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Ошибка добавления записи о бэкапе: {Message}", ex.Message);
+                return false;
             }
         }
 
-        // Получить список бэкапов текущего пользователя
-        public List<(long Id, string BackupName, string Location, DateTime CreatedAt)> GetBackups()
+        public List<BackupRecord> GetBackups()
         {
-            var list = new List<(long, string, string, DateTime)>();
-            if (_currentUserId == 0)
-                return list;
+            long userId = GetCurrentUserId();
+            var result = new List<BackupRecord>();
 
-            using (var connection = new SqliteConnection(_connectionString))
+            foreach (string line in ReadLines())
             {
-                connection.Open();
-                string query = @"
-                SELECT Id, BackupName, Location, CreatedAt
-                FROM Backups WHERE UserId = @userId
-                ORDER BY CreatedAt DESC;";
-
-                using (var cmd = new SqliteCommand(query, connection))
+                if (!line.StartsWith("BACKUP|", StringComparison.OrdinalIgnoreCase))
                 {
-                    cmd.Parameters.AddWithValue("@userId", _currentUserId);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            long id = reader.GetInt64(0);
+                    continue;
+                }
 
-                            string backupName = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                            string location = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                            DateTime createdAt;
+                long lineUserId;
+                if (!long.TryParse(GetPart(line, 2), out lineUserId) || lineUserId != userId)
+                {
+                    continue;
+                }
 
-                            if (reader.IsDBNull(3))
-                                createdAt = DateTime.MinValue; 
-                            else
-                                createdAt = reader.GetDateTime(3);
+                long id;
+                long ticks;
+                long.TryParse(GetPart(line, 1), out id);
+                long.TryParse(GetPart(line, 5), out ticks);
 
-                            list.Add((id, backupName, location, createdAt));
-                        }
-                    }
+                result.Add(new BackupRecord
+                {
+                    Id = id,
+                    BackupName = Decode(GetPart(line, 3)),
+                    Location = Decode(GetPart(line, 4)),
+                    CreatedAt = ticks > 0 ? new DateTime(ticks) : DateTime.MinValue
+                });
+            }
+
+            return result.OrderByDescending(x => x.CreatedAt).ToList();
+        }
+
+        private List<string> ReadLines()
+        {
+            if (!File.Exists(_dataPath))
+            {
+                File.WriteAllText(_dataPath, string.Empty, Encoding.UTF8);
+            }
+
+            return File.ReadAllLines(_dataPath, Encoding.UTF8).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+        }
+
+        private void WriteLines(List<string> lines)
+        {
+            File.WriteAllLines(_dataPath, lines.ToArray(), Encoding.UTF8);
+        }
+
+        private static long GetNextId(List<string> lines, string type)
+        {
+            long max = 0;
+            foreach (string line in lines)
+            {
+                if (!line.StartsWith(type + "|", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                long id;
+                if (long.TryParse(GetPart(line, 1), out id) && id > max)
+                {
+                    max = id;
                 }
             }
-            return list;
+
+            return max + 1;
+        }
+
+        private static string GetPart(string line, int index)
+        {
+            string[] parts = line.Split('|');
+            return index >= 0 && index < parts.Length ? parts[index] : string.Empty;
+        }
+
+        private static string Encode(string value)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value ?? string.Empty));
+        }
+
+        private static string Decode(string value)
+        {
+            try
+            {
+                return Encoding.UTF8.GetString(Convert.FromBase64String(value ?? string.Empty));
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
     }
 }
