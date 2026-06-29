@@ -8,8 +8,8 @@
         Title="MainWindow" Height="300" Width="400">
     <Grid>
         <StackPanel Margin="10">
-            <TextBox Name="LoginName" IsReadOnly="True" Margin="0,5,0,10" />
-            <TextBox Name="Password" IsReadOnly="True" Margin="0,5,0,10" />
+            <TextBox Name="LoginName" Margin="0,5,0,10" />
+            <TextBox Name="Password" Margin="0,5,0,10" />
             <Button Name="Login" Content="Войти" Click="Login_bth" />
         </StackPanel>
     </Grid>
